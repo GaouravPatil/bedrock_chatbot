@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bedrock Chatbot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            background: white;
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #0078d7;
+            color: white;
+            padding: 15px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        #chat {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .message {
+            margin-bottom: 12px;
+            line-height: 1.4;
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            clear: both;
+        }
+        .message.user {
+            background: #0078d7;
+            color: white;
+            float: right;
+            border-bottom-right-radius: 4px;
+        }
+        .message.bot {
+            background: #e1e1e1;
+            color: #333;
+            float: left;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input input[type="text"] {
+            flex-grow: 1;
+            border: none;
+            padding: 12px 15px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .chat-input button {
+            background: #0078d7;
+            border: none;
+            color: white;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+        .chat-input button:hover {
+            background: #005fa3;
+        }
+        /* Scrollbar styling */
+        #chat::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Chat with Amazon Bedrock</div>
+        <div id="chat"></div>
+        <div class="chat-input">
+            <input type="text" id="message" placeholder="Type your message..." autocomplete="off" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage('You', message, 'user');
+
+            fetch('/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'message=' + encodeURIComponent(message)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    addMessage('Bot', data.response, 'bot');
+                } else {
+                    addMessage('Error', data.error, 'bot');
+                }
+            })
+            .catch(error => {
+                addMessage('Error', error, 'bot');
+            });
+
+            messageInput.value = '';
+            messageInput.focus();
+        }
+
+        function addMessage(sender, text, cssClass) {
+            const chat = document.getElementById('chat');
+            const messageElem = document.createElement('div');
+            messageElem.classList.add('message', cssClass);
+            messageElem.textContent = text;
+            chat.appendChild(messageElem);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
